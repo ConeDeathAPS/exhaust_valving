@@ -32,20 +32,41 @@ void setup() {
 }
 
 void loop() {
+    delay(500);
+    Serial.print("\nMANUAL TRIGGER STATE = ");
+    Serial.print(digitalRead(MANUAL_TRIGGER));
+    Serial.print("\nECM TRIGGER STATE = ");
+    Serial.print(digitalRead(ECM_TRIGGER));
     if (digitalRead(MANUAL_TRIGGER) == LOW || digitalRead(ECM_TRIGGER) == LOW) {
-        leftHandActuator.setDesiredState(OPEN_DUTY_CYCLE);
-        rightHandActuator.setDesiredState(OPEN_DUTY_CYCLE);
-    } else if (leftHandActuator.getCurrentDutyCycle() == OPEN_DUTY_CYCLE) {
-        leftHandActuator.setDesiredState(CLOSED_DUTY_CYCLE);
-        rightHandActuator.setDesiredState(CLOSED_DUTY_CYCLE);
+        // Open has been commanded, so open the valves if they are closed
+        if (leftHandActuator.getCurrentDutyCycle() == CLOSED_DUTY_CYCLE) {
+            Serial.println("OPEN LEFT");
+            leftHandActuator.setDesiredState(OPEN_DUTY_CYCLE);
+        }
+        if (rightHandActuator.getCurrentDutyCycle() == CLOSED_DUTY_CYCLE) {
+            Serial.println("OPEN RIGHT");
+            rightHandActuator.setDesiredState(OPEN_DUTY_CYCLE);
+        }
+    } else {
+        if (leftHandActuator.getCurrentDutyCycle() == OPEN_DUTY_CYCLE) {
+            Serial.println("CLOSE LEFT");
+            leftHandActuator.setDesiredState(CLOSED_DUTY_CYCLE);
+        }
+        if (rightHandActuator.getCurrentDutyCycle() == OPEN_DUTY_CYCLE) {
+            Serial.println("CLOSE RIGHT");
+            rightHandActuator.setDesiredState(CLOSED_DUTY_CYCLE);
+        }
     }
 
     // Set LED states
-    if (leftHandActuator.getCurrentDutyCycle() == CLOSED_DUTY_CYCLE && rightHandActuator.getCurrentDutyCycle() == CLOSED_DUTY_CYCLE) {
-        digitalWrite(LED_OPEN, LOW);
-        digitalWrite(LED_CLOSED, HIGH);
-    } else if (leftHandActuator.getCurrentDutyCycle() == OPEN_DUTY_CYCLE && rightHandActuator.getCurrentDutyCycle() == OPEN_DUTY_CYCLE) {
+    // Due to how the switch we are using works, LOW actually turns on the LEDs.
+    // The current switch also has syncronous LEDs meaning we cannot control them independently
+    if (leftHandActuator.getCurrentDutyCycle() != rightHandActuator.getCurrentDutyCycle()) {
+        // Turn off both LEDs
         digitalWrite(LED_OPEN, HIGH);
+        digitalWrite(LED_CLOSED, HIGH);
+    } else {
+        digitalWrite(LED_OPEN, LOW);
         digitalWrite(LED_CLOSED, LOW);
     }
 }

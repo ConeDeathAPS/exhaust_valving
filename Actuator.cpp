@@ -17,7 +17,7 @@ void Actuator::init() const {
     pinMode(PIN_PWM, OUTPUT);
     ledcSetup(PWM_CHAN, 100, 12);
     ledcAttachPin(2, PWM_CHAN);
-    const auto dutyValue = static_cast<uint32_t>(std::round(4095.0f * .1));
+    const auto dutyValue = static_cast<uint32_t>(std::round(4095.0f * closedDutyCycle));
     ledcWrite(PWM_CHAN, dutyValue);
 }
 
@@ -26,6 +26,7 @@ void Actuator::setDesiredState(const float newDutyCycle) {
         const float clampedDuty = constrain(newDutyCycle, 0.0f, 1.0f);
         const auto dutyValue = static_cast<uint32_t>(std::round(4095.0f * clampedDuty));
         ledcWrite(PWM_CHAN, dutyValue);
+        Serial.println(newDutyCycle);
         currentDutyCycle = newDutyCycle;
     }
 }
